@@ -1,0 +1,10 @@
+---
+
+base_path: /var/www/application
+admin_user: "vagrant"
+
+swapfile_size: 4000MB
+swapfile_location: /swapfile
+swapfile_swappiness: False
+swapfile_vfs_cache_pressure: False
+swapfile_use_dd: False

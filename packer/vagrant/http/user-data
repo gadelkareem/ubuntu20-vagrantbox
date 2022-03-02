@@ -1,0 +1,89 @@
+#cloud-config
+# https://ubuntu.com/server/docs/install/autoinstall
+autoinstall:
+  version: 1
+  early-commands:
+    - systemctl stop ssh
+  locale: en_US.UTF-8
+  apt:
+    geoip: true
+  keyboard:
+    layout: en
+    variant: us
+  storage:
+    layout:
+      name: lvm
+  identity:
+    hostname: vagrant
+    username: vagrant
+    # pass is vagrant
+    # docker run -it --rm alpine mkpasswd -m sha512 -S salt vagrant
+    password: $6$salt$Wn.xJNirqsUcUr6sujSSgg/mQwPqgPA2s0xrz3/.mYqDoLIvQGhMCNEY4cpdhM7Vlsn8hKKhDw1M7SLmyBqoE1
+    #lock_passwd: false
+  ssh:
+    install-server: yes
+    allow-pw: true
+  packages:
+    - vim
+    - tmux
+    - git
+    - uuid
+    - software-properties-common
+    - python3-pip
+    - python3-venv
+    - apt-transport-https
+    - gcc
+    - make
+    - htop
+    - curl
+    - wget
+    - screen
+    - ca-certificates
+    - jq
+    - build-essential
+    - ntp
+    - ufw
+    - unzip
+    - libpq-dev
+  user-data:
+    disable_root: false
+    package_update: true
+    package_upgrade: true
+    write_files:
+      - path: /etc/sudoers.d/vagrant
+        owner: 'root:root'
+        permissions: '0644'
+        defer: true
+        content:
+          vagrant ALL=(ALL) NOPASSWD:ALL
+      - path: /root/welcome.txt
+        owner: 'root:root'
+        permissions: '0644'
+        defer: true
+        content:
+          Welcome to Ubuntu root.
+      - encoding: b64
+        path: /etc/modprobe.d/cust-blacklist.conf
+        owner: 'root:root'
+        permissions: '0644'
+        defer: true
+        content: YmxhY2tsaXN0IGpveWRldgpibGFja2xpc3Qgc25kX2hkYV9pbnRlbApibGFja2xpc3Qgc25kX2hkYV9jb2RlYwpibGFja2xpc3Qgc25kX2hkYV9jb2RlY19nZW5lcmljCmJsYWNrbGlzdCBzbmRfaGRhX2NvcmUKYmxhY2tsaXN0IHNuZF9wY20KYmxhY2tsaXN0IHNuZF9od2RlcApibGFja2xpc3Qgc25kX3RpbWVyCmJsYWNrbGlzdCBzbmQKYmxhY2tsaXN0IHNvdW5kY29yZQ==
+      - encoding: b64
+        path: /etc/ansible/facts.d/vmhost.fact
+        owner: 'root:root'
+        permissions: '0755'
+        defer: true
+        content: IyEvdXNyL2Jpbi9lbnYgc2gKZWNobyAie1widm0tY2xvdWQtaW5pdFwiIDogXCJ0cnVlXCJ9Ig==
+  late-commands:
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get dist-upgrade -yq
+    - curtin in-target --target=/target -- apt-get upgrade -yq
+    - curtin in-target --target=/target -- add-apt-repository --yes --update ppa:ansible/ansible
+    - curtin in-target --target=/target -- apt install ansible -y -q
+    - mkdir -p /target/etc/ansible
+    - printf '%s\n%s\n' '[defaults]' 'roles_path = /etc/ansible/roles'  >> /target/etc/ansible/ansible.cfg
+    - mkdir /target/etc/ansible/facts.d
+    - mkdir -p /target/var/www
+    - 'sed -i "s/dhcp4: true/&\n      dhcp-identifier: mac/" /target/etc/netplan/00-installer-config.yaml'
+    - uptime
+    - echo finished

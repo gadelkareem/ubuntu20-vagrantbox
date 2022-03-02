@@ -1,0 +1,63 @@
+---
+
+- name: Disable interactive
+  shell: export DEBIAN_FRONTEND=noninteractive && dpkg --configure -a
+
+- name: Configuring locale for bashsystemd limits
+  shell: export LC_ALL=en_US.UTF-8 LC_CTYPE=en_US.UTF-8  LC_MESSAGES=POSIX LANGUAGE=en_US.UTF-8
+
+- name: Fix locale
+  shell: |
+    echo "LC_ALL=en_US.UTF-8" >> /etc/environment
+    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+    echo "LANG=en_US.UTF-8" > /etc/locale.conf
+    locale-gen en_US.UTF-8
+
+- name: Configuring locale to server
+  copy: src=locale
+        dest=/etc/default/locale
+        backup=yes
+
+- name: set timezone to Europe/Amsterdam
+  timezone:
+    name: Europe/Amsterdam
+
+- name: Adding existing user to group www-data
+  user: name="{{ admin_user }}"
+        groups=www-data
+        append=yes
+
+- name: Add DNS to resolve.conf
+  lineinfile:
+    dest: /etc/resolv.conf
+    line: "{{item}}"
+  with_items:
+    - "nameserver 1.1.1.1"
+    - "nameserver 1.0.0.1"
+    - "nameserver 8.8.4.4"
+    - "nameserver 8.8.8.8"
+    - "nameserver 2606:4700:4700::1111"
+    - "nameserver 2606:4700:4700::1001"
+
+- name: Apply network changes
+  shell: netplan apply || service networking restart
+  ignore_errors: yes
+
+- name: Stop Apache
+  service: name=apache2 state=stopped enabled=no
+  ignore_errors: yes
+
+- name: Remove Apache
+  apt: pkg=apache2 state=absent
+
+- name: Create "{{base_path}}" directory
+  file: path="{{base_path}}" state=directory owner={{admin_user}}
+
+- name: install requests
+  shell: pip3 install {{item}} --upgrade
+  with_items:
+    - requests
+    - pyyaml
+  ignore_errors: yes
+
+

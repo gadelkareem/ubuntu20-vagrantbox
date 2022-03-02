@@ -1,0 +1,8 @@
+---
+
+- hosts: base
+  connection: local
+  become: yes
+  roles:
+    - common
+    - swap-file
