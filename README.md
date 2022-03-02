@@ -2,7 +2,7 @@
 Vagrant ARM64 Ubuntu 20.04 box built using packer and parallels for Apple Silicon Macbook M1, with Parallels guest tools already installed.
 
 # Build and run the box:
-```shell
+```bash
 git clone git@github.com:gadelkareem/ubuntu20-vagrantbox.git
 ./init.sh
 ```
